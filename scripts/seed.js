@@ -1,6 +1,8 @@
 const { db } = require('@vercel/postgres');
 const bcrypt = require('bcrypt');
 
+const { users, walletAddresses } = require ('../src/lib/demo-data');
+
 async function seedUsers(client) {
   try {
     //Use uuid for better security vs incremental id
@@ -22,7 +24,7 @@ async function seedUsers(client) {
       users.map(async (user) => {
         const hashedPassword = await bcrypt.hash(user.password, 10);
         return client.sql`
-        INSERT INTO user (id, name, email, password)
+        INSERT INTO "user" (id, name, email, password)
         VALUES (${user.id}, ${user.name}, ${user.email}, ${hashedPassword})
         ON CONFLICT (id) DO NOTHING;
       `;
@@ -63,17 +65,20 @@ async function seedWallets(client) {
 
     // Create the "invoices" table if it doesn't exist
     const alterTable = await client.sql`
-    ALTER TABLE IF EXISTS "wallet_address" 
+    ALTER TABLE IF EXISTS "wallet_address"
         ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES "user"(id)
     ;
     `;
 
+    console.log(`Altered wallet_address table`);
+
+
     // Insert data into the "invoices" table
     const insertedWallets = await Promise.all(
-      wallets.map(
-        (address) => client.sql`
-        INSERT INTO wallet_address (user_id, status, date, address)
-        VALUES (${address.user_id}, ${address.status}, ${address.date}, ${invoice.address})
+        walletAddresses.map(
+        (wallet) => client.sql`
+        INSERT INTO "wallet_address" (user_id, status, date, address)
+        VALUES (${wallet.user_id}, ${wallet.status}, ${wallet.date}, ${wallet.address})
         ON CONFLICT (id) DO NOTHING;
       `,
       ),
@@ -83,7 +88,8 @@ async function seedWallets(client) {
 
     return {
       createTable,
-      invoices: insertedWallets,
+      alterTable,
+      wallets: insertedWallets,
     };
   } catch (error) {
     console.error('Error seeding wallets:', error);
