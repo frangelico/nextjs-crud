@@ -1,9 +1,12 @@
 import Link from 'next/link';
 import NavLinks from '@/app/ui/dashboard/nav-links';
 import { PowerIcon } from '@heroicons/react/24/outline';
+import { redirect } from 'next/navigation';
 // import { signOut } from '@/auth';
 
-const signOut = function(){}
+const signOut = function(){
+    redirect('/');
+}
 
 export default function SideNav() {
   return (
